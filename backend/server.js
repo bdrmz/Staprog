@@ -1,14 +1,15 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs'); // Use bcryptjs for hashing
 const multer = require('multer');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const fetch = require('node-fetch'); // For proxying requests
+const fetch = require('node-fetch'); // For proxying classify requests
 
 // WebAuthn server imports
 const {
@@ -30,13 +31,11 @@ const webauthnRouter = require('./routes/webauthn');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Proxy configuration variables
+// Configuration variables
 const {
   VISION_API_URL,
   VISION_API_KEY,
-  POINTS_API_URL,
-  POINTS_API_KEY,
-  FRONTEND_ORIGIN,
+   FRONTEND_ORIGIN,
   SESSION_SECRET,
   JWT_SECRET,
   MONGODB_URI,
@@ -106,30 +105,23 @@ function verifyToken(req, res, next) {
   try {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 }
 
-// Proxy endpoint: award points (protected)
-app.post('/api/points', verifyToken, async (req, res) => {
+// Internal endpoint: award points
+app.post('/api/award-points', verifyToken, async (req, res) => {
+  const { pointsToAdd } = req.body;
   try {
-    const apiRes = await fetch(POINTS_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': POINTS_API_KEY,
-      },
-      body: JSON.stringify(req.body),
-    });
-    if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: await apiRes.text() });
-    }
-    const data = await apiRes.json();
-    res.json(data);
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.points = (user.points || 0) + pointsToAdd;
+    await user.save();
+    res.json({ points: user.points });
   } catch (err) {
-    console.error('Points proxy error:', err);
-    res.status(500).json({ error: 'Points proxy error' });
+    console.error('Award points error:', err);
+    res.status(500).json({ message: 'Award points error' });
   }
 });
 
@@ -167,7 +159,7 @@ app.post(
       user.profileImage = `/uploads/${req.file.filename}`;
       await user.save();
       res.json({ profileImage: user.profileImage });
-    } catch (err) {
+    } catch {
       res.status(500).json({ message: 'Image upload failed' });
     }
   }
@@ -189,7 +181,7 @@ app.post('/api/save-location', verifyToken, async (req, res) => {
     user.points = (user.points || 0) + steps;
     await user.save();
     res.json({ points: user.points });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to save location' });
   }
 });
@@ -213,7 +205,7 @@ if (!MONGODB_URI) {
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log(`✔ Connected to MongoDB at ${MONGODB_URI}`))
-  .catch((err) => console.error('✖ MongoDB connection error:', err));
+  .catch(err => console.error('✖ MongoDB connection error:', err));
 
 // Ensure EMAIL_HOST is configured
 if (!EMAIL_HOST) {
