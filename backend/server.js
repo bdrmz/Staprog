@@ -1,3 +1,4 @@
+// backend/server.js
 require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -5,11 +6,10 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs'); // Use bcryptjs for hashing
+const bcrypt = require('bcryptjs');        // استخدم bcryptjs
 const multer = require('multer');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const fetch = require('node-fetch'); // For proxying classify requests
 
 // WebAuthn server imports
 const {
@@ -31,16 +31,30 @@ const webauthnRouter = require('./routes/webauthn');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration variables
+// استخراج متغيرات البيئة
 const {
   VISION_API_URL,
   VISION_API_KEY,
-   FRONTEND_ORIGIN,
+  FRONTEND_ORIGIN,
   SESSION_SECRET,
   JWT_SECRET,
   MONGODB_URI,
   EMAIL_HOST,
 } = process.env;
+
+// التحقق من توفر المتغيرات الضرورية
+if (!VISION_API_URL || !VISION_API_KEY) {
+  console.error('✖ VISION_API_URL أو VISION_API_KEY غير مضبوطان في .env');
+  process.exit(1);
+}
+if (!MONGODB_URI) {
+  console.error('✖ MONGODB_URI غير مضبوط في .env');
+  process.exit(1);
+}
+if (!EMAIL_HOST) {
+  console.error('✖ EMAIL_HOST غير مضبوط في .env');
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors({
@@ -49,14 +63,12 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: '5mb' }));
-app.use(
-  session({
-    secret: SESSION_SECRET || 'fallback_secret',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === 'production' },
-  })
-);
+app.use(session({
+  secret: SESSION_SECRET || 'fallback_secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: process.env.NODE_ENV === 'production' },
+}));
 
 // Serve Frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
@@ -83,9 +95,12 @@ app.post('/api/classify', async (req, res) => {
       },
       body: JSON.stringify({ image }),
     });
+
     if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: await apiRes.text() });
+      const text = await apiRes.text();
+      return res.status(apiRes.status).json({ error: text });
     }
+
     const data = await apiRes.json();
     res.json(data);
   } catch (err) {
@@ -98,10 +113,11 @@ app.post('/api/classify', async (req, res) => {
 function verifyToken(req, res, next) {
   let token = req.cookies?.token;
   if (!token && req.headers.authorization) {
-    const parts = req.headers.authorization.split(' ');
-    if (parts[0] === 'Bearer') token = parts[1];
+    const [scheme, t] = req.headers.authorization.split(' ');
+    if (scheme === 'Bearer') token = t;
   }
   if (!token) return res.status(401).json({ message: 'Access denied, token missing' });
+
   try {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
@@ -116,8 +132,10 @@ app.post('/api/award-points', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     user.points = (user.points || 0) + pointsToAdd;
     await user.save();
+
     res.json({ points: user.points });
   } catch (err) {
     console.error('Award points error:', err);
@@ -130,6 +148,7 @@ app.get('/api/user/:id', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password -__v');
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     res.json({
       name: user.name,
       email: user.email,
@@ -148,6 +167,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname)}`),
 });
 const upload = multer({ storage });
+
 app.post(
   '/api/upload-profile-image',
   verifyToken,
@@ -156,10 +176,13 @@ app.post(
     try {
       const user = await User.findById(req.user.id);
       if (!user) return res.status(404).json({ message: 'User not found' });
+
       user.profileImage = `/uploads/${req.file.filename}`;
       await user.save();
+
       res.json({ profileImage: user.profileImage });
-    } catch {
+    } catch (err) {
+      console.error('Image upload error:', err);
       res.status(500).json({ message: 'Image upload failed' });
     }
   }
@@ -171,6 +194,7 @@ app.post('/api/save-location', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
     await Location.create({
       user: user._id,
       latitude,
@@ -178,10 +202,13 @@ app.post('/api/save-location', verifyToken, async (req, res) => {
       steps,
       date: new Date(),
     });
+
     user.points = (user.points || 0) + steps;
     await user.save();
+
     res.json({ points: user.points });
-  } catch {
+  } catch (err) {
+    console.error('Save location error:', err);
     res.status(500).json({ message: 'Failed to save location' });
   }
 });
@@ -197,23 +224,13 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong!');
 });
 
-// Connect to MongoDB
-if (!MONGODB_URI) {
-  console.error('✖ MONGODB_URI is not set in .env');
-  process.exit(1);
-}
+ // Connect to MongoDB
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log(`✔ Connected to MongoDB at ${MONGODB_URI}`))
   .catch(err => console.error('✖ MongoDB connection error:', err));
 
-// Ensure EMAIL_HOST is configured
-if (!EMAIL_HOST) {
-  console.error('✖ EMAIL_HOST is not set in .env');
-  process.exit(1);
-}
-
-// Start server
+ // Start server
 app.listen(PORT, () => {
   console.log(`✔ Server running on http://localhost:${PORT}`);
 });
