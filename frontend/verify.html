@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-ar="Staprog – التحقق" data-en="Staprog – Verify">Staprog – التحقق</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .error-message {
+      color: red;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    #otp-timer {
+      margin: 8px 0;
+      font-weight: bold;
+      text-align: center;
+    }
+    .large-btn {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+    .back-btn {
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-btn" id="back-btn" aria-label="العودة"></button>
+    <img src="images/logo.png" class="logo" alt="Staprog Logo" />
+    <h1 class="header-title">Staprog</h1>
+    <p class="header-subtitle">التحقق من الحساب</p>
+  </header>
+
+  <main class="form-container">
+    <h2 data-ar="التحقق" data-en="Verify">التحقق</h2>
+    <form id="verifyForm">
+      <div>
+        <button type="button" class="large-btn" id="send-code-btn">أرسل رمز التحقق</button>
+        <div id="otp-timer"></div>
+      </div>
+
+      <div>
+        <input type="text" id="otp-code" maxlength="6" placeholder="أدخل الرمز هنا" />
+        <button type="button" class="large-btn" id="verify-code-btn">تحقق من الرمز</button>
+      </div>
+
+      <div id="errorMessage" class="error-message"></div>
+    </form>
+  </main>
+
+  <script>
+    // ضبط سهم العودة حسب اتجاه الصفحة
+    const backBtn = document.getElementById('back-btn');
+    if (document.documentElement.dir === 'rtl') {
+      backBtn.textContent = '←';
+      backBtn.onclick = () => location.href = 'register.html';
+    } else {
+      backBtn.textContent = '→';
+      backBtn.onclick = () => location.href = 'register.html';
+    }
+
+    // استرجاع email من رابط الصفحة
+    const params = new URLSearchParams(location.search);
+    const email = params.get('email');
+
+    const sendBtn   = document.getElementById('send-code-btn');
+    const verifyBtn = document.getElementById('verify-code-btn');
+    const timerEl   = document.getElementById('otp-timer');
+    const errorEl   = document.getElementById('errorMessage');
+
+    function startTimer() {
+      let count = 60;
+      timerEl.textContent = `أعد الإرسال بعد ${count} ثانية`;
+      const interval = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          clearInterval(interval);
+          timerEl.textContent = '';
+        } else {
+          timerEl.textContent = `أعد الإرسال بعد ${count} ثانية`;
+        }
+      }, 1000);
+    }
+
+    sendBtn.addEventListener('click', async () => {
+      errorEl.textContent = '';
+      try {
+        const res = await fetch('/api/otp/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'فشل في إرسال الرمز');
+        startTimer();
+      } catch (err) {
+        errorEl.textContent = err.message;
+      }
+    });
+
+    verifyBtn.addEventListener('click', async () => {
+      errorEl.textContent = '';
+      const code = document.getElementById('otp-code').value.trim();
+      if (!code) {
+        errorEl.textContent = 'الرجاء إدخال رمز التحقق';
+        return;
+      }
+      try {
+        const res = await fetch('/api/otp/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.verified) {
+          throw new Error(data.message || 'الرمز غير صحيح');
+        }
+        // إعادة توجيه بعد نجاح التحقق
+        location.href = 'login.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

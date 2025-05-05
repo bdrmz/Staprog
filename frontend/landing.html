@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title data-ar="ابدأ رحلتك مع Staprog" data-en="Start Your Journey with Staprog">ابدأ رحلتك مع Staprog</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .landing-container {
+      text-align: center;
+      padding: 2rem;
+    }
+    .landing-logo {
+      width: 120px;
+      margin: 0 auto 1rem;
+    }
+    .hero h1.welcome {
+      font-size: 2.5rem;
+      color: var(--green);
+      margin: 0;
+    }
+    .hero h1.brand {
+      font-size: 2.5rem;
+      color: var(--green-dark);
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      color: #333;
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0.5rem auto 1rem;
+      text-align: center;
+    }
+    .start-btn {
+      background: var(--green);
+      color: #fff;
+      padding: .75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .start-btn:hover {
+      background: var(--green-dark);
+    }
+
+    .section-box {
+      border: 2px solid var(--green-dark);
+      border-radius: 8px;
+      padding: 1rem;
+      max-width: 700px;
+      margin: 2rem auto;
+      background: #fff;
+      text-align: right;
+    }
+    .section-box h3,
+    .section-box h4 {
+      color: var(--green-dark);
+      margin-bottom: .5rem;
+    }
+    .section-box p {
+      color: #555;
+      margin: 0 0 1rem 0;
+    }
+    .section-box ul {
+      list-style: disc inside;
+      color: #333;
+      padding-left: 1rem;
+    }
+
+    .contact-box a {
+      display: block;
+      color: var(--green);
+      text-decoration: none;
+      margin: .25rem 0;
+      font-size: .95rem;
+    }
+    .contact-box a:hover {
+      text-decoration: underline;
+    }
+
+    .final-footer {
+      background: var(--green);
+      color: #fff;
+      padding: 1rem;
+      font-size: .85rem;
+      text-align: center;
+    }
+
+    #lang-landing {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: .5rem;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    #lang-landing:hover {
+      background: var(--green);
+      color: #fff;
+    }
+
+    html[dir="ltr"] .section-box {
+      text-align: left !important;
+    }
+  </style>
+</head>
+<body>
+  <button id="lang-landing">English</button>
+
+  <div class="landing-container">
+    <img src="images/logo.png" alt="Staprog Logo" class="landing-logo"/>
+
+    <div class="hero section">
+      <h1 class="welcome" data-ar="مرحبا بك في" data-en="Welcome to">مرحبا بك في</h1>
+      <h1 class="brand" data-ar="Staprog" data-en="Staprog">Staprog</h1>
+      <p data-ar="انضم إلينا لحماية بيئتنا عبر تحديات ممتعة وكسب نقاط وتحقيق تغيّر حقيقي."
+         data-en="Join us to protect our environment through fun challenges, earn points, and make a real impact.">
+        انضم إلينا لحماية بيئتنا عبر تحديات ممتعة وكسب نقاط وتحقيق تغيّر حقيقي.
+      </p>
+      <button class="start-btn" data-ar="ابدأ رحلتك معنا" data-en="Start Your Journey"
+              onclick="location.href='index.html'">
+        ابدأ رحلتك معنا
+      </button>
+    </div>
+
+    <div class="section-box">
+      <h3 data-ar="من نحن" data-en="About Us">من نحن</h3>
+      <p data-ar=" منصة بيئية تفاعلية لتحفيز المستخدمين على الحفاظ على البيئة من خلال التوثيق وجمع النقاط"  
+         data-en=" an interactive eco-platform that encourages users to preserve the environment through documentation and point collection ">
+        Staprog هو منصة بيئية تفاعلية لتحفيز المستخدمين على الحفاظ على البيئة من خلال التوثيق وجمع النقاط.
+      </p>
+    </div>
+
+    <div class="section-box">
+      <h4 data-ar="أهدافنا" data-en="Our Mission">أهدافنا</h4>
+      <ul>
+        <li data-ar="تحفيز الطلاب على السلوك البيئي الإيجابي"
+            data-en="Motivating students towards positive environmental behavior">
+          تحفيز الطلاب على السلوك البيئي الإيجابي
+        </li>
+        <li data-ar="استخدام التكنولوجيا لتتبع وتشجيع الأنشطة البيئية"
+            data-en="Using technology to track and encourage environmental activities">
+          استخدام التكنولوجيا لتتبع وتشجيع الأنشطة البيئية
+        </li>
+        <li data-ar="دعم أهداف الاستدامة ورؤية 2030"
+            data-en="Supporting sustainability objectives and Vision 2030">
+          دعم أهداف الاستدامة ورؤية 2030
+        </li>
+      </ul>
+    </div>
+
+    <div class="section-box contact-box">
+      <h4 data-ar="تواصل معنا" data-en="Contact Us">تواصل معنا</h4>
+      <a href="mailto:Staprogg@gmail.com"
+         data-ar="📧 Staprogg@gmail.com"
+         data-en="📧 Staprogg@gmail.com">
+        📧 Staprogg@gmail.com
+      </a>
+      <a href="https://instagram.com/staprog_" target="_blank"
+         data-ar="Insta: staprog_"
+         data-en="Insta: staprog_">
+        Insta: staprog_
+      </a>
+    </div>
+  </div>
+
+  <footer class="final-footer">
+    <p data-ar="© 2025 جميع الحقوق محفوظة. تم إنشاء الموقع في المملكة العربية السعودية."
+       data-en="© 2025 All rights reserved. Site built in Saudi Arabia.">
+      © 2025 جميع الحقوق محفوظة. تم إنشاء الموقع في المملكة العربية السعودية.
+    </p>
+  </footer>
+
+  <script>
+    const langBtn = document.getElementById('lang-landing');
+    function applyLang(l) {
+      document.documentElement.lang = l;
+      document.documentElement.dir  = l === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => {
+        el.textContent = el.dataset[l];
+      });
+      langBtn.textContent = l === 'ar' ? 'English' : 'عربي';
+    }
+
+    const curLang = localStorage.getItem('siteLanguage') || 'ar';
+    applyLang(curLang);
+
+    langBtn.onclick = () => {
+      const nextLang = curLang === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('siteLanguage', nextLang);
+      location.reload();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-ar="Staprog – التسجيل" data-en="Staprog – Register">Staprog – التسجيل</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .error-message {
+      color: red;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .form-container div {
+      margin-bottom: 1rem;
+    }
+    .back-btn {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--primary);
+    }
+    .back-btn:hover {
+      color: var(--primary-dark);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-btn" id="back-btn" aria-label="الصفحة الرئيسية"></button>
+    <img src="images/logo.png" class="logo" alt="Staprog Logo" />
+    <h1 class="header-title" data-ar="Staprog" data-en="Staprog">Staprog</h1>
+    <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise">
+      مملكتنا تستاهل.. لا تتساهل
+    </p>
+  </header>
+
+  <main class="form-container">
+    <h2 data-ar="التسجيل" data-en="Register">التسجيل</h2>
+    <form id="registerForm" action="verify.html" method="get">
+      <div>
+        <label for="name">الاسم الكامل</label>
+        <input type="text" id="name" name="name" required />
+       </div>
+      <div>
+        <label for="email">البريد الإلكتروني</label>
+        <input type="email" id="email" name="email" required autocomplete="email" />
+       </div>
+      <div>
+        <label for="phone">رقم الهاتف</label>
+        <input type="tel" id="phone" name="phone" required autocomplete="tel" />
+       </div>
+      <div>
+        <label for="birthdate">تاريخ الميلاد</label>
+        <input type="date" id="birthdate" name="birthdate" required />
+       </div>
+      <div>
+        <label for="gender">الجنس</label>
+        <select id="gender" name="gender" required>
+          <option value="" disabled selected>اختر</option>
+          <option value="male">ذكر</option>
+          <option value="female">أنثى</option>
+        </select>
+       </div>
+      <div>
+        <label for="education">المستوى الدراسي</label>
+        <select id="education" name="education" required>
+          <option value="" disabled selected>اختر</option>
+          <option value="elementary">ابتدائي</option>
+          <option value="middle">متوسط</option>
+          <option value="high">ثانوي</option>
+          <option value="university">جامعي</option>
+        </select>
+       </div>
+      <div>
+        <label for="city">المدينة</label>
+        <input type="text" id="city" name="city" required />
+       </div>
+      <div>
+        <label for="region">المنطقة</label>
+        <input type="text" id="region" name="region" required />
+       </div>
+      <div>
+        <label for="password">كلمة المرور</label>
+        <input type="password" id="password" name="password" required autocomplete="new-password" />
+       </div>
+      <div>
+        <label for="confirmPassword">تأكيد كلمة المرور</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" />
+       </div>
+      <div>
+        <label>
+          <input type="checkbox" id="link-watch" name="linkWatch" />
+          ربط Apple Watch بعد التسجيل
+        </label>
+       </div>
+      <button type="submit" class="large-btn" id="submit-btn" disabled>تسجيل</button>
+      <div id="errorMessage" class="error-message"></div>
+    </form>
+  </main>
+
+  <script>
+    // Apply language and direction
+    function applyLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir  = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => {
+        const txt = el.dataset[lang];
+        if (el.tagName.toLowerCase() === 'input') el.placeholder = txt;
+        else el.textContent = txt;
+      });
+    }
+    const lang = localStorage.getItem('siteLanguage') || 'ar';
+    applyLanguage(lang);
+
+    // Set back button arrow dynamically
+    const backBtn = document.getElementById('back-btn');
+    backBtn.textContent = document.documentElement.dir === 'rtl' ? '←' : '→';
+    backBtn.addEventListener('click', () => window.location.href = 'index.html');
+
+    // Form validation logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registerForm');
+      const submitBtn = document.getElementById('submit-btn');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirmPassword');
+      const errorEl = document.getElementById('errorMessage');
+
+      function validateForm() {
+        const fields = ['name','email','phone','birthdate','gender','education','city','region','password','confirmPassword']
+          .map(id => document.getElementById(id).value.trim());
+        const allFilled = fields.every(val => val !== '');
+        const passwordsMatch = password.value === confirmPassword.value;
+        if (!allFilled) { errorEl.textContent = ''; return false; }
+        if (!passwordsMatch) errorEl.textContent = 'كلمتا المرور غير متطابقتين'; else errorEl.textContent = '';
+        return allFilled && passwordsMatch;
+      }
+
+      form.querySelectorAll('input, select').forEach(el =>
+        el.addEventListener('input', () => submitBtn.disabled = !validateForm())
+      );
+
+      form.addEventListener('submit', e => {
+        if (!validateForm()) e.preventDefault();
+      });
+    });
+  </script>
+</body>
+</html>

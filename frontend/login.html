@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-ar="Staprog – تسجيل الدخول" data-en="Staprog – Login">Staprog – تسجيل الدخول</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root {
+      --font-primary: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+      --bg-light: #f0f4f7;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #e0e0e0;
+      --primary: #4caf50;
+      --primary-dark: #388e3c;
+      --header-bg-light: #fff;
+      --header-bg-dark: #333;
+      --header-text: #2e7d32;
+      --shadow: rgba(0,0,0,0.1);
+    }
+    body { margin:0; padding:0; font-family:var(--font-primary); background:var(--bg-light); color:var(--text-light); }
+    body.dark-mode { background:var(--bg-dark); color:var(--text-dark); }
+    .header {
+      background:var(--header-bg-light);
+      color:var(--header-text);
+      padding:1rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      position:relative;
+      box-shadow:0 2px 5px var(--shadow);
+    }
+    body.dark-mode .header { background:var(--header-bg-dark); color:var(--text-dark); }
+    .back-btn {
+      position:absolute; top:1rem; left:1rem;
+      background:none; border:none;
+      font-size:1.5rem; color:var(--primary);
+      cursor:pointer;
+    }
+    .back-btn:hover { color:var(--primary-dark); }
+    .logo { height:80px; margin-bottom:.5rem; }
+    .header-title { font-size:2rem; margin:0; }
+    .header-subtitle { font-size:1rem; margin:0; }
+    .form-container {
+      margin:2rem auto;
+      max-width:440px;
+      padding:2rem;
+      background:var(--header-bg-light);
+      border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+    body.dark-mode .form-container { background:var(--bg-dark); }
+    .page-title { text-align:center; font-size:1.1rem; margin-bottom:1rem; }
+    .face-section { text-align:center; margin-bottom:2rem; }
+    .face-section input {
+      width:100%; padding:.5rem; font-size:1rem;
+      border:1px solid #ccc; border-radius:4px;
+      margin-bottom:1rem;
+    }
+    .face-section button {
+      padding:.75rem 1.5rem;
+      font-size:1rem;
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      transition:background .3s;
+      width:100%; margin-bottom:1rem;
+    }
+    .face-section button:hover { background:var(--primary-dark); }
+    .login-form div { margin-bottom:1rem; text-align:left; }
+    .login-form label { display:block; margin-bottom:.25rem; font-weight:bold; }
+    .login-form input { width:100%; padding:.5rem; font-size:1rem; border:1px solid #ccc; border-radius:4px; }
+    .large-btn {
+      width:100%; padding:.75rem; font-size:1rem;
+      background:var(--primary); color:#fff;
+      border:none; border-radius:6px; cursor:pointer;
+      transition:background .3s;
+    }
+    .large-btn:hover { background:var(--primary-dark); }
+    .error-message { color:red; text-align:center; margin-top:.5rem; }
+    .popup {
+      display:none; position:fixed;
+      top:50%; left:50%; transform:translate(-50%,-50%);
+      background:#222; color:#fff;
+      padding:1rem; border-radius:10px;
+      text-align:center; z-index:999;
+    }
+    .popup button {
+      margin:.5rem; padding:.5rem 1rem;
+      background:var(--primary); border:none;
+      border-radius:6px; color:#fff; cursor:pointer;
+    }
+    .popup button:hover { background:var(--primary-dark); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button type="button" class="back-btn" onclick="location.href='register.html'" aria-label="الصفحة السابقة">←</button>
+    <img src="images/logo.png" class="logo" alt="Staprog Logo" />
+    <h1 class="header-title" data-ar="Staprog" data-en="Staprog">Staprog</h1>
+    <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise">مملكتنا تستاهل.. لا تتساهل</p>
+  </header>
+
+  <div class="form-container">
+    <h2 class="page-title" data-ar="تسجيل الدخول / تفعيل Face ID" data-en="Login / Register Face ID">تسجيل الدخول / تفعيل Face ID</h2>
+
+    <div class="face-section">
+      <input type="email" id="regEmail" placeholder="example@domain.com" />
+      <button id="startRegister" class="large-btn" data-ar="تفعيل Face ID" data-en="Register Face ID">تفعيل Face ID</button>
+      <p id="regStatus" class="error-message"></p>
+    </div>
+
+    <form id="loginForm" class="login-form">
+      <div>
+        <label for="loginEmail" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" name="email" autocomplete="email" required />
+      </div>
+      <div>
+        <label for="loginPassword" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+        <input type="password" id="loginPassword" name="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="large-btn" data-ar="دخول" data-en="Login">دخول</button>
+      <p id="authStatus" class="error-message"></p>
+    </form>
+
+    <div class="popup" id="faceFailPopup">
+      <p id="failMessage" data-ar="لم يتم التعرّف على الوجه" data-en="Face not recognized">لم يتم التعرّف على الوجه</p>
+      <button id="retryBtn" data-ar="إعادة المحاولة" data-en="Retry">إعادة المحاولة</button>
+      <button id="pwBtn" data-ar="إدخال كلمة المرور" data-en="Enter Password">إدخال كلمة المرور</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { startRegistration, startAuthentication } from 'https://unpkg.com/@simplewebauthn/browser@latest/dist/simplewebauthn.browser.esm.js';
+    if (localStorage.getItem('token') && localStorage.getItem('userId')) window.location.href='user-profile.html';
+    function applyLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir  = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => el.textContent = el.dataset[lang]);
+    }
+    applyLanguage(localStorage.getItem('siteLanguage') || 'ar');
+    document.getElementById('startRegister').onclick = async () => {
+      const s = document.getElementById('regStatus'); s.textContent = '';
+      const email = document.getElementById('regEmail').value.trim();
+      if (!email) { s.textContent = 'الرجاء إدخال البريد الإلكتروني'; return; }
+      try {
+        const optsRes = await fetch('/api/webauthn/register/options', {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email })
+        }); if (!optsRes.ok) throw new Error('فشل إنشاء الخيارات');
+        const options = await optsRes.json(); const credential = await startRegistration(options);
+        const verifyRes = await fetch('/api/webauthn/register', {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: options.user.id, response: credential })
+        }); const verifyJson = await verifyRes.json(); if (verifyJson.registered) { window.location.href='user-profile.html'; } else throw new Error('فشل التفعيل');
+      } catch (err) { s.style.color='red'; s.textContent = err.message || 'فشل التفعيل'; }
+    };
+    document.getElementById('loginForm').onsubmit = async e => {
+      e.preventDefault(); const a = document.getElementById('authStatus'); a.textContent = '';
+      try {
+        const data = JSON.stringify({ email: e.target.email.value, password: e.target.password.value });
+        const res = await fetch('/api/login', {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: data
+        }); if (!res.ok) throw new Error();
+        const { token, userId } = await res.json(); localStorage.setItem('token', token); localStorage.setItem('userId', userId); window.location.href='user-profile.html';
+      } catch { a.textContent='فشل تسجيل الدخول'; }
+    };
+  </script>
+</body>
+</html>

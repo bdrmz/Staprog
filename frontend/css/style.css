@@ -1,0 +1,242 @@
+/* 1. Variables & Font */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+:root {
+  --font-primary: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+  --bg-light: #f0f4f7;
+  --bg-dark: #121212;
+  --text-light: #000000;
+  --text-dark: #e0e0e0;
+  --primary: #4CAF50;
+  --primary-dark: #388E3C;
+  --header-bg-light: #ffffff;
+  --header-bg-dark: #333333;
+  --header-text: #2E7D32;
+  --header-subtext: #4CAF50;
+  --shadow: rgba(0,0,0,0.1);
+  --green: var(--primary);
+  --green-dark: var(--primary-dark);
+}
+
+/* 2. Global Styles */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-primary);
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s;
+}
+body.dark-mode {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+a { text-decoration: none; color: inherit; }
+button, input, a { font-family: var(--font-primary); }
+button:focus, input:focus, a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* 3. Header */
+.header {
+  background-color: var(--header-bg-light);
+  color: var(--header-text);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 5px var(--shadow);
+  position: relative;
+}
+ body.dark-mode .header {
+  background-color: var(--header-bg-dark);
+  color: var(--text-dark);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.logo {
+  height: 120px;
+  margin-bottom: 10px;
+}
+.header-title { font-size: 2.5rem; margin: 0; color: var(--header-text); }
+.header-subtitle { font-size: 1rem; margin: 0; color: var(--header-subtext); }
+
+/* 4. Navigation & Buttons */
+.main-buttons {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+ }
+ .main-buttons button {
+  width: 80%;
+  max-width: 360px;
+  padding: 1rem;
+  font-size: 1.25rem;
+  background-color: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+ .main-buttons button:hover {
+  background-color: var(--primary-dark);
+}
+
+.language-dark-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+ .language-dark-container button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #ccc;
+  color: var(--text-light);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+ body.dark-mode .language-dark-container button {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+  border: 1px solid #444;
+}
+ body.dark-mode .language-dark-container button:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+/* 5. Forms */
+.form-container, .login-form {
+  width: 90%;
+  max-width: 400px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.form-container label, .login-form label { text-align: right; }
+.form-container input, .form-container select, .login-form input {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.login-form button, .form-container button {
+  padding: 1rem;
+  font-size: 1.25rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+.login-form button:hover, .form-container button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* 6. Chatbot */
+#chat-toggle-btn {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  width: 3.75rem;
+  height: 3.75rem;
+  background-color: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9999;
+}
+ #chatbot-container {
+  position: fixed;
+  bottom: 5rem;
+  right: 1rem;
+  width: 16rem;
+  max-height: 24rem;
+  background-color: var(--header-bg-light);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+body.dark-mode #chatbot-container {
+  background-color: var(--header-bg-dark);
+  border-color: #444;
+}
+  #chat-header {
+  background-color: var(--primary);
+  color: #fff;
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: bold;
+}
+ #chat-messages {
+  flex: 1;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+  #chat-input {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+ #chat-input input {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  outline: none;
+}
+ #chat-input button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: var(--primary);
+  color: #fff;
+}
+
+/* 7. FaceID Popup */
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #222;
+  color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 999;
+}
+.popup button {
+  margin: 10px 5px;
+  padding: 10px 15px;
+  background: var(--primary);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.popup button:hover {
+  background: var(--primary-dark);
+}
+
+/* 8. Responsive */
+@media (max-width: 768px) {
+  .logo { height: 100px; }
+  .header-title { font-size: 28px; }
+  .header-subtitle { font-size: 16px; }
+  .main-buttons button { width: 90%; font-size: 18px; padding: 1rem; }
+}

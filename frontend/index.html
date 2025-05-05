@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title data-ar="Staprog – الصفحة الرئيسية" data-en="Staprog – Home">Staprog</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    :root {
+      --font-primary: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+      --bg-light: #f0f4f7;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #e0e0e0;
+      --primary: #4CAF50;
+      --primary-dark: #388E3C;
+      --header-bg-light: #fff;
+      --header-bg-dark: #333;
+      --header-text: #2E7D32;
+      --shadow: rgba(0,0,0,0.1);
+    }
+
+    .user-message, .bot-message {
+      background: transparent;
+      align-self: flex-start;
+    }
+    .user-message {
+      background: #dcf8c6;
+      align-self: flex-end;
+    }
+    .bot-message {
+      background: #eee;
+      align-self: flex-start;
+    }
+    body.dark-mode .user-message {
+      background: #2e7d32;
+      color: white;
+    }
+    body.dark-mode .bot-message {
+      background: #444;
+      color: white;
+    }
+    body.dark-mode #chatbot-container {
+      background: #222 !important;
+      border-color: #444;
+    }
+    body.dark-mode #chat-header {
+      background: var(--primary-dark) !important;
+    }
+    /* Remove input styling since send is disabled */
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-btn" id="back-btn" data-href="landing.html" aria-label="رجوع"></button>
+    <img src="images/logo.png" class="logo" alt="Staprog Logo"/>
+    <h1 class="header-title" data-ar="Staprog" data-en="Staprog">Staprog</h1>
+    <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise">
+      مملكتنا تستاهل.. لا تتساهل
+    </p>
+  </header>
+
+  <div class="main-buttons">
+    <button data-ar="الرئيسية" data-en="Home" id="home-btn">الرئيسية</button>
+    <button data-ar="التسجيل" data-en="Register" onclick="location.href='register.html'">التسجيل</button>
+    <button data-ar="تسجيل الدخول" data-en="Login" onclick="location.href='login.html'">تسجيل الدخول</button>
+    <button data-ar="الملف الشخصي" data-en="Profile" onclick="location.href='user-profile.html'">الملف الشخصي</button>
+  </div>
+
+  <div class="controls">
+    <button id="lang-toggle">عربي</button>
+    <button id="theme-toggle">🌙</button>
+  </div>
+
+  <button id="chat-toggle-btn">❓</button>
+
+  <div id="chatbot-container" style="display:none; flex-direction:column; position:fixed; bottom:20px; right:20px; width:320px; height:auto; max-height:400px; background:#fff; border:1px solid #ccc; border-radius:8px; overflow:hidden; z-index:1000;">
+    <div id="chat-header" style="background:var(--primary); color:#fff; padding:0.5rem; font-weight:bold;" data-ar="المساعد البيئي" data-en="Eco Assistant">المساعد البيئي</div>
+    <div id="chat-messages" style="flex:1; padding:0.5rem; overflow-y:auto; height:260px;"></div>
+    <div id="chat-suggestions" style="padding:0.5rem; border-top:1px solid #ccc; display:flex; flex-wrap:wrap; gap:0.5rem; height:auto; max-height:80px; overflow-y:auto;"></div>
+    <!-- Removed chat input and send button -->
+  </div>
+
+  <script>
+    // زر العودة
+    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-href');
+      if (target) location.href = target; else history.back();
+    }));
+
+    // زر الرئيسية
+    document.getElementById('home-btn').addEventListener('click', () => {
+      location.href = 'landing.html';
+    });
+
+    // الوضع الليلي
+    const themeToggle = document.getElementById('theme-toggle');
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+      themeToggle.textContent = '☀️';
+    }
+    themeToggle.onclick = () => {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark ? 'enabled' : '');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+    };
+
+    // اللغة
+    const langToggle = document.getElementById('lang-toggle');
+    function applyLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => {
+        const text = el.getAttribute(`data-${lang}`);
+        el.textContent = text;
+      });
+      langToggle.textContent = lang === 'ar' ? 'English' : 'عربي';
+    }
+    const savedLang = localStorage.getItem('siteLanguage') || 'ar';
+    applyLanguage(savedLang);
+    langToggle.onclick = () => {
+      const next = localStorage.getItem('siteLanguage') === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('siteLanguage', next);
+      applyLanguage(next);
+    };
+
+    // الشات بوت
+     const chatContainer = document.getElementById('chatbot-container');
+     const chatMessages = document.getElementById('chat-messages');
+     const suggestions = document.getElementById('chat-suggestions');
+
+     const tips = [
+  // FAQs
+  {q_ar:'كيف أغير لغة الموقع؟', a_ar:'اضغط زر اللغة في الأعلى لاختيار العربية أو الإنجليزية.', q_en:'How to change site language?', a_en:'Click the language button at the top to toggle AR/EN.'},
+  {q_ar:'كيف أطلب رمز التحقق؟', a_ar:'بعد التسجيل اضغط "إرسال رمز" في صفحة التحقق.', q_en:'How to request a verification code?', a_en:'After signup, click "Send Code" on the verification page.'},
+  {q_ar:'كيف أتابع نقاطي المكتسبة؟', a_ar:'يمكنك رؤية النقاط في صفحة الملف الشخصي.', q_en:'How to track my earned points?', a_en:'You can view your points in the Profile page.'},
+  {q_ar:'كيف أعدل ملفي الشخصي؟', a_ar:'اذهب للإعدادات واضغط "تحرير الملف الشخصي".', q_en:'How to edit my profile?', a_en:'Go to Settings and click "Edit Profile".'},
+// Practical tips
+  {q_ar:'افصل نفاياتك لإعادة التدوير', a_ar:'اكسب 5 نقاط لكل عبوة بلاستيكية تعيد تدويرها.', q_en:'Separate your waste for recycling', a_en:'Earn 5 points for each recycled plastic bottle.'},
+  {q_ar:'استخدم الحافلات أو القطارات', a_ar:'احصل على 10 نقاط لكل رحلة مواصلات عامة.', q_en:'Use public transport', a_en:'Earn 10 points per ride.'},
+  {q_ar:'امشِ لمسافات قصيرة', a_ar:'اكسب 15 نقطة لكل كيلومتر تمشيه.', q_en:'Walk short distances', a_en:'Earn 15 points per km walked.'},
+  {q_ar:'اركب الدراجة بدل السيارة', a_ar:'اكسب 20 نقطة لكل كيلومتر بالدراجة.', q_en:'Bike instead of drive', a_en:'Earn 20 points per km cycled.'},
+  {q_ar:'ازرع شجرة في حديقتك', a_ar:'اكسب 50 نقطة لكل شجرة تزرعها.', q_en:'Plant a tree', a_en:'Earn 50 points per tree planted.'},
+  {q_ar:'استخدم أكياس قابلة لإعادة الاستخدام', a_ar:'احصل على 5 نقاط لكل كيس تستخدمه.', q_en:'Use reusable bags', a_en:'Earn 5 points per reusable bag.'},
+  {q_ar:'اشرب من زجاجة قابلة لإعادة التعبئة', a_ar:'اكسب 5 نقاط لكل زجاجة.', q_en:'Use refillable bottles', a_en:'Earn 5 points per refill.'},
+  {q_ar:'أطفئ الأضواء عند الخروج', a_ar:'اكسب 5 نقاط في كل مرة.', q_en:'Turn off lights', a_en:'Earn 5 points each time.'},
+  {q_ar:'استخدم مصابيح LED', a_ar:'احصل على 10 نقاط لكل مصباح LED.', q_en:'Use LED bulbs', a_en:'Earn 10 points per bulb.'},
+  {q_ar:'جمع القمامة في الطبيعة', a_ar:'احصل على 30 نقطة لكل كيس تنظفه.', q_en:'Pick up litter', a_en:'Earn 30 points per bag of litter.'},
+  {q_ar:'أعد استخدام الورق', a_ar:'احصل على 3 نقاط لكل 5 ورقات.', q_en:'Reuse paper', a_en:'Earn 3 points per 5 sheets reused.'},
+  {q_ar:'وفر الماء بالاستحمام السريع', a_ar:'اكسب 2 نقطة لكل 10 لترات ماء توفرها.', q_en:'Quick showers', a_en:'Earn 2 points per 10L saved.'},
+  {q_ar:'ابدأ بتسميد النفايات العضوية', a_ar:'اكسب 10 نقاط لكل كجم سماد.', q_en:'Compost organic waste', a_en:'Earn 10 points per kg of compost.'},
+  {q_ar:'شارك في ورشة عمل بيئية', a_ar:'احصل على 40 نقطة عند حضور ورشة.', q_en:'Attend eco workshop', a_en:'Earn 40 points per workshop.'},
+];
+
+    document.getElementById('chat-toggle-btn').addEventListener('click', () => {
+      chatContainer.style.display = chatContainer.style.display === 'flex' ? 'none' : 'flex';
+      if (suggestions.childElementCount === 0) {
+        appendMessage('👋 مرحباً بك في Staprog!', 'bot');
+        showSuggestions();
+      }
+    });
+
+    function showSuggestions() {
+      suggestions.innerHTML = '';
+      const lang = localStorage.getItem('siteLanguage') || 'ar';
+      tips.forEach(item => {
+        const btn = document.createElement('button');
+        btn.textContent = lang === 'ar' ? item.q_ar : item.q_en;
+        btn.style.padding = '0.3rem 0.6rem';
+        btn.style.border = '1px solid var(--primary)';
+        btn.style.borderRadius = '4px';
+        btn.style.background = 'var(--primary)';
+        btn.style.color = '#fff';
+        btn.onclick = () => {
+          const prompt = lang === 'ar' ? item.q_ar : item.q_en;
+          const answer = lang === 'ar' ? item.a_ar : item.a_en;
+          appendMessage(prompt, 'user');
+          setTimeout(() => appendMessage(answer, 'bot'), 300);
+        };
+        suggestions.appendChild(btn);
+      });
+    }
+
+     function appendMessage(msg, who) {
+      const div = document.createElement('div');
+      div.className = who === 'user' ? 'user-message' : 'bot-message';
+      div.innerText = msg;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

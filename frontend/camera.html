@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-ar="توثيق رمي النفايات" data-en="Waste Documentation">توثيق رمي النفايات</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .camera-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    video {
+      width: 90%;
+      max-width: 400px;
+      border-radius: 12px;
+      border: 2px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      width: 90%;
+      max-width: 400px;
+      margin-top: 15px;
+      border-radius: 12px;
+      border: 2px dashed #4CAF50;
+    }
+
+    .confirmation {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-btn" id="back-btn" aria-label="رجوع">←</button>
+    <img src="images/logo.png" class="logo" alt="Staprog Logo" />
+    <h1 class="header-title" data-ar="Staprog" data-en="Staprog">Staprog</h1>
+    <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise"></p>
+  </header>
+
+   <main class="camera-container">
+    <h2 data-ar="توثيق رمي النفايات" data-en="Waste Documentation">توثيق رمي النفايات</h2>
+    <video id="video" autoplay muted playsinline></video>
+    <button class="large-btn" id="capture-btn" data-ar="التقاط صورة" data-en="Capture Photo">التقاط صورة</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <p id="status-capture" class="confirmation" style="display:none;" data-ar="تم التقاط الصورة!" data-en="Photo captured!">تم التقاط الصورة!</p>
+    <p id="status-classify" class="confirmation" style="display:none;" data-ar="جارٍ تحليل الصورة..." data-en="Analyzing photo...">جارٍ تحليل الصورة...</p>
+  </main>
+
+  <script>
+    const API_POINTS_URL = 'https://api.example.com/points';
+    const API_VISION_URL = 'https://api.example.com/classify';
+    const API_KEY = 'YOsk-proj-A51oLFF1LM5VxphSM3z-nBPqkKjIYOVqJTAxatFQtgHXsg3DFQjTx253oMxDKsVhYS0X5KkKyDT3BlbkFJ7Y_dtsFnS5xV6BF69i1qGnjAus73C-Rd2onzXVh2L9V5m68DtQWVjQ6ykl4HhOGWBmD31rFbwAUR_API_KEY_HERE'; 
+
+    const lang = localStorage.getItem('siteLanguage') || 'ar';
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const statusCapture = document.getElementById('status-capture');
+    const statusClassify = document.getElementById('status-classify');
+
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+
+    function applyLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => {
+        el.textContent = el.dataset[lang];
+      });
+      document.getElementById('back-btn').textContent = lang === 'ar' ? '←' : '→';
+    }
+
+    applyLanguage(lang);
+
+    document.getElementById('back-btn').onclick = () => {
+      location.href = 'index.html';
+    };
+
+    // تشغيل الكاميرا مع محاولة لاستخدام الكاميرا الأمامية على الجوال
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert(lang === 'ar' ? 'يرجى السماح باستخدام الكاميرا.' : 'Please allow camera access.');
+        console.error('Camera error:', err);
+      });
+
+    captureBtn.addEventListener('click', () => {
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0)
+      canvas.style.display = 'block';
+
+      statusCapture.style.display = 'block';
+      statusClassify.style.display = 'block';
+      statusClassify.textContent = lang === 'ar' ? 'جارٍ تحليل الصورة...' : 'Analyzing photo...';
+
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      fetch(API_VISION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
+        },
+        body: JSON.stringify({ image: imageData })
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        const label = (lang === 'ar' ? data.ar_label : data.en_label || '').toLowerCase();
+        const confidence = data.confidence || 0;
+
+        if (label.includes('valid') || confidence > 0.75) {
+          return fetch(API_POINTS_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': API_KEY
+            },
+            body: JSON.stringify({ points: 50 })
+          });
+        } else {
+          return Promise.reject({ invalid: true });
+        }
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        statusClassify.textContent = lang === 'ar'
+          ? 'تم إضافة 50 نقطة!'
+          : '50 points added!';
+      })
+      .catch(err => {
+        if (err.invalid) {
+          statusClassify.textContent = lang === 'ar'
+            ? 'الصورة ليست لرمي نفايات صحيح.'
+            : 'Not a valid waste disposal.';
+        } else {
+          statusClassify.textContent = lang === 'ar'
+            ? 'حدث خطأ أثناء التحليل.'
+            : 'An error occurred.';
+          console.error('Error:', err);
+        }
+      });
+
+      // إخفاء الرسائل بعد 7 ثوانٍ
+      setTimeout(() => {
+        statusCapture.style.display = 'none';
+        statusClassify.style.display = 'none';
+        canvas.style.display = 'none';
+      }, 7000);
+    });
+  </script>
+</body>
+</html>
