@@ -32,6 +32,28 @@
       font-size: 16px;
       font-weight: bold;
     }
+    .confirmation.success {
+      color: var(--primary-dark);
+    }
+    .confirmation.error {
+      color: #f44336;
+    }
+
+    .large-btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .large-btn:hover {
+      background-color: var(--primary-dark);
+    }
   </style>
 </head>
 <body>
@@ -42,7 +64,7 @@
     <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise"></p>
   </header>
 
-   <main class="camera-container">
+  <main class="camera-container">
     <h2 data-ar="توثيق رمي النفايات" data-en="Waste Documentation">توثيق رمي النفايات</h2>
     <video id="video" autoplay muted playsinline></video>
     <button class="large-btn" id="capture-btn" data-ar="التقاط صورة" data-en="Capture Photo">التقاط صورة</button>
@@ -52,9 +74,9 @@
   </main>
 
   <script>
-    const API_POINTS_URL = 'https://api.example.com/points';
-    const API_VISION_URL = 'https://api.example.com/classify';
-    const API_KEY = 'YOsk-proj-A51oLFF1LM5VxphSM3z-nBPqkKjIYOVqJTAxatFQtgHXsg3DFQjTx253oMxDKsVhYS0X5KkKyDT3BlbkFJ7Y_dtsFnS5xV6BF69i1qGnjAus73C-Rd2onzXVh2L9V5m68DtQWVjQ6ykl4HhOGWBmD31rFbwAUR_API_KEY_HERE'; 
+    // Proxy endpoints on your server
+    const API_VISION_URL = '/api/classify';
+    const API_AWARD_URL = '/api/award-points';
 
     const lang = localStorage.getItem('siteLanguage') || 'ar';
     const video = document.getElementById('video');
@@ -63,10 +85,12 @@
     const statusCapture = document.getElementById('status-capture');
     const statusClassify = document.getElementById('status-classify');
 
+    // Dark mode
     if (localStorage.getItem('darkMode') === 'enabled') {
       document.body.classList.add('dark-mode');
     }
 
+    // Apply language texts
     function applyLanguage(lang) {
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -75,57 +99,54 @@
       });
       document.getElementById('back-btn').textContent = lang === 'ar' ? '←' : '→';
     }
+     applyLanguage(lang);
 
-    applyLanguage(lang);
-
+    // Back button
     document.getElementById('back-btn').onclick = () => {
       location.href = 'index.html';
     };
 
-    // تشغيل الكاميرا مع محاولة لاستخدام الكاميرا الأمامية على الجوال
+    // Start camera (rear)
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(stream => {
-        video.srcObject = stream;
-      })
+      .then(stream => { video.srcObject = stream; })
       .catch(err => {
         alert(lang === 'ar' ? 'يرجى السماح باستخدام الكاميرا.' : 'Please allow camera access.');
         console.error('Camera error:', err);
       });
 
+    // Capture & classify
     captureBtn.addEventListener('click', () => {
       const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0)
+      ctx.drawImage(video, 0, 0);
       canvas.style.display = 'block';
 
+      // Reset status
       statusCapture.style.display = 'block';
       statusClassify.style.display = 'block';
+      statusClassify.classList.remove('success', 'error');
       statusClassify.textContent = lang === 'ar' ? 'جارٍ تحليل الصورة...' : 'Analyzing photo...';
 
-      const imageData = canvas.toDataURL('image/jpeg');
-
+      // Send to classify proxy
+      const imageData = canvas.toDataURL('image/jpeg').replace(/^data:image\/jpeg;base64,/, '');
       fetch(API_VISION_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ image: imageData })
       })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
         const label = (lang === 'ar' ? data.ar_label : data.en_label || '').toLowerCase();
         const confidence = data.confidence || 0;
-
-        if (label.includes('valid') || confidence > 0.75) {
-          return fetch(API_POINTS_URL, {
+         if (label.includes('valid') || confidence > 0.75) {
+          // valid disposal → award points via proxy
+          return fetch(API_AWARD_URL, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': API_KEY
-            },
-            body: JSON.stringify({ points: 50 })
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ pointsToAdd: 50 })
           });
         } else {
           return Promise.reject({ invalid: true });
@@ -134,23 +155,26 @@
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(() => {
         statusClassify.textContent = lang === 'ar'
-          ? 'تم إضافة 50 نقطة!'
-          : '50 points added!';
+          ? '✔ صحيح! تم إضافة 50 نقطة.'
+          : '✔ Correct! 50 points added.';
+        statusClassify.classList.add('success');
       })
       .catch(err => {
         if (err.invalid) {
           statusClassify.textContent = lang === 'ar'
-            ? 'الصورة ليست لرمي نفايات صحيح.'
-            : 'Not a valid waste disposal.';
+            ? 'عذراً، أعد المحاولة.'
+            : 'Sorry, try again.';
+          statusClassify.classList.add('error');
         } else {
           statusClassify.textContent = lang === 'ar'
-            ? 'حدث خطأ أثناء التحليل.'
+            ? 'حدث خطأ أثناء العملية.'
             : 'An error occurred.';
+          statusClassify.classList.add('error');
           console.error('Error:', err);
         }
       });
 
-      // إخفاء الرسائل بعد 7 ثوانٍ
+      // hide after 7s
       setTimeout(() => {
         statusCapture.style.display = 'none';
         statusClassify.style.display = 'none';

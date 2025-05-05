@@ -1,5 +1,4 @@
-// backend/server.js
-require('dotenv').config();
+ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -9,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const session = require('express-session');
 const mongoose = require('mongoose');
+const fetch = require('node-fetch'); // For proxying requests
 
 // WebAuthn server imports
 const {
@@ -30,16 +30,29 @@ const webauthnRouter = require('./routes/webauthn');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Proxy configuration variables
+const {
+  VISION_API_URL,
+  VISION_API_KEY,
+  POINTS_API_URL,
+  POINTS_API_KEY,
+  FRONTEND_ORIGIN,
+  SESSION_SECRET,
+  JWT_SECRET,
+  MONGODB_URI,
+  EMAIL_HOST,
+} = process.env;
+
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+  origin: FRONTEND_ORIGIN || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(cookieParser());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '5mb' }));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'fallback_secret',
+    secret: SESSION_SECRET || 'fallback_secret',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' },
@@ -59,6 +72,29 @@ app.use('/api/otp', otpRoutes);
 app.use('/api', authRoutes);
 app.use('/api/webauthn', webauthnRouter);
 
+// Proxy endpoint: classify image
+app.post('/api/classify', async (req, res) => {
+  try {
+    const { image } = req.body;
+    const apiRes = await fetch(VISION_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': VISION_API_KEY,
+      },
+      body: JSON.stringify({ image }),
+    });
+    if (!apiRes.ok) {
+      return res.status(apiRes.status).json({ error: await apiRes.text() });
+    }
+    const data = await apiRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Classify proxy error:', err);
+    res.status(500).json({ error: 'Classify proxy error' });
+  }
+});
+
 // JWT verification middleware
 function verifyToken(req, res, next) {
   let token = req.cookies?.token;
@@ -68,12 +104,34 @@ function verifyToken(req, res, next) {
   }
   if (!token) return res.status(401).json({ message: 'Access denied, token missing' });
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Invalid token' });
   }
 }
+
+// Proxy endpoint: award points (protected)
+app.post('/api/points', verifyToken, async (req, res) => {
+  try {
+    const apiRes = await fetch(POINTS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': POINTS_API_KEY,
+      },
+      body: JSON.stringify(req.body),
+    });
+    if (!apiRes.ok) {
+      return res.status(apiRes.status).json({ error: await apiRes.text() });
+    }
+    const data = await apiRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Points proxy error:', err);
+    res.status(500).json({ error: 'Points proxy error' });
+  }
+});
 
 // User & Location Endpoints
 app.get('/api/user/:id', verifyToken, async (req, res) => {
@@ -115,7 +173,7 @@ app.post(
   }
 );
 
-// Save location & update points
+// Save location & update points in DB
 app.post('/api/save-location', verifyToken, async (req, res) => {
   const { latitude, longitude, steps } = req.body;
   try {
@@ -148,14 +206,17 @@ app.use((err, req, res, next) => {
 });
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/staprog';
+if (!MONGODB_URI) {
+  console.error('✖ MONGODB_URI is not set in .env');
+  process.exit(1);
+}
 mongoose
-  .connect(mongoUri)
-  .then(() => console.log(`✔ Connected to MongoDB at ${mongoUri}`))
+  .connect(MONGODB_URI)
+  .then(() => console.log(`✔ Connected to MongoDB at ${MONGODB_URI}`))
   .catch((err) => console.error('✖ MongoDB connection error:', err));
 
 // Ensure EMAIL_HOST is configured
-if (!process.env.EMAIL_HOST) {
+if (!EMAIL_HOST) {
   console.error('✖ EMAIL_HOST is not set in .env');
   process.exit(1);
 }
@@ -163,4 +224,4 @@ if (!process.env.EMAIL_HOST) {
 // Start server
 app.listen(PORT, () => {
   console.log(`✔ Server running on http://localhost:${PORT}`);
-}); 
+});

@@ -33,8 +33,7 @@
       justify-content: center;
       box-shadow: 0 2px 5px var(--shadow);
     }
-    /* الزر دايمًا موجود، بنعطيه موقع افتراضي ونعدّله بالجافاسكربت */
-    .back-btn {
+     .back-btn {
       position: absolute;
       top: 1rem;
       left: auto;
@@ -120,19 +119,16 @@
 </head>
 <body>
   <header class="header">
-    <!-- اضفت الزر دايمًا، هيتحرك حسب اللغة -->
-    <button id="back-btn" class="back-btn" aria-label="العودة">←</button>
-
-    <div>
+     <button id="back-btn" class="back-btn" aria-label="العودة">←</button>
+     <div>
       <img src="images/logo.png" class="logo" alt="Staprog Logo"/>
       <h1 class="header-title" data-ar="Staprog" data-en="Staprog">Staprog</h1>
       <p class="header-subtitle" data-ar="مملكتنا تستاهل.. لا تتساهل" data-en="Our kingdom deserves… don’t compromise">
         مملكتنا تستاهل.. لا تتساهل
       </p>
-    </div>
-
+     </div>
     <button id="settings-btn" aria-label="الإعدادات" onclick="location.href='settings.html'">⚙️</button>
-  </header>
+   </header>
 
   <main class="user-info">
     <label for="avatar-upload">
@@ -140,11 +136,21 @@
     </label>
     <input type="file" id="avatar-upload" accept="image/*" style="display:none;"/>
 
-    <p><span class="label" data-ar="الاسم:" data-en="Name:"></span><span id="user-name">اسم المستخدم</span></p>
-    <p><span class="label" data-ar="البريد الإلكتروني:" data-en="Email:"></span><span id="user-email">example@email.com</span></p>
-    <p><span class="label" data-ar="النقاط:" data-en="Points:"></span><span class="points" id="user-points">0</span></p>
+    <p>
+      <span class="label" data-ar="الاسم:" data-en="Name:"></span>
+      <span id="user-name">اسم المستخدم</span>
+    </p>
+    <p>
+      <span class="label" data-ar="البريد الإلكتروني:" data-en="Email:"></span>
+      <span id="user-email">example@email.com</span>
+    </p>
+    <p>
+      <span class="label" data-ar="النقاط:" data-en="Points:"></span>
+      <span class="points" id="user-points">0</span>
+    </p>
 
     <div class="action-buttons">
+      <!-- زر التوثيق المرتبط بصفحة waste.html -->
       <button id="capture-btn" class="small-btn" data-ar="توثيق" data-en="Capture">توثيق</button>
       <button id="track-steps-btn" class="small-btn" data-ar="تتبع المشي" data-en="Track Walk">تتبع المشي</button>
     </div>
@@ -154,10 +160,10 @@
     const lang = localStorage.getItem('siteLanguage') || 'ar';
     const backBtn = document.getElementById('back-btn');
 
-    // تحديد وجهة الرجوع
+    // تعيين وجهة زر الرجوع
     backBtn.onclick = () => window.location.href = 'index.html';
 
-    // تحريك السهم بحسب اللغة
+    // ضبط اتجاه ومحتوى الزر حسب اللغة
     if (lang === 'ar') {
       backBtn.style.right = '1rem';
       backBtn.style.left = 'auto';
@@ -168,16 +174,16 @@
       backBtn.textContent = '→';
     }
 
-    // تحميل بيانات المستخدم
+    // تحميل بيانات المستخدم عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', async () => {
       const token = localStorage.getItem('token');
       const res = await fetch('/api/user/' + localStorage.getItem('userId'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const user = await res.json();
-      document.getElementById('user-name').textContent  = user.name  || 'اسم المستخدم';
-      document.getElementById('user-email').textContent = user.email || 'example@email.com';
-      document.getElementById('user-points').textContent= user.points ?? '0';
+      document.getElementById('user-name').textContent   = user.name   || 'اسم المستخدم';
+      document.getElementById('user-email').textContent  = user.email  || 'example@email.com';
+      document.getElementById('user-points').textContent = user.points ?? '0';
     });
 
     // رفع صورة الملف الشخصي
@@ -188,13 +194,24 @@
       formData.append('profileImage', file);
       const token = localStorage.getItem('token');
       const res = await fetch('/api/upload-profile-image', {
-        method:'POST',
-        headers:{ 'Authorization': `Bearer ${token}` },
-        body:formData
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
       });
       const updated = await res.json();
       document.getElementById('user-avatar').src = updated.profileImage;
       alert(lang === 'ar' ? 'تم رفع الصورة بنجاح' : 'Image uploaded successfully');
+    });
+
+    // ربط زر "توثيق" بصفحة توثيق رمي النفايات
+    document.getElementById('capture-btn').addEventListener('click', () => {
+      // إلى اسم الصفحة الفعلي لديك
+      window.location.href = 'camera.html';
+    });
+
+    // (اختياري) زر تتبع المشي
+    document.getElementById('track-steps-btn').addEventListener('click', () => {
+      window.location.href = 'track-steps.html';
     });
   </script>
 </body>
